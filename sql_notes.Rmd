@@ -1,0 +1,562 @@
+---
+title: "SQLite Data Base Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+### (1) Tek Tablo Sorguları:
+<br>
+<br>
+
+#### WHERE, LIKE
+
+| Like İşlemi             | İşlem Sonucu                                                    |
+|:------------------------|:----------------------------------------------------------------|
+| `WHERE adı LIKE "a%"`   | adı "a" harfi ile başlayan kayıtlar                             |
+| `WHERE adı LIKE "%a"`   | adı "a" harfi ile biten kayıtlar                                |
+| `WHERE adı LIKE "%ab%"` | adında "ab" geçen kayıtlar                                      |
+| `WHERE adı LIKE "_a%"`  | adının ikinci karakteri "a" olan kayıtlar                       |
+| `WHERE adı LIKE "a__"`  | adı "a" ile başlayıp en az 3 karakter uzunluğunda olan kayıtlar |
+| `WHERE adı LIKE "b%a"`  | adı "b" ile bşlayıp "a" ile biten kayıtlar                      |
+| `WHERE adı LIKE "_b%a"` | adının ikinci karakteri "b" olup "a" ile biten kayıtlar         |
+  
+MS Access'te "%" işareti yerine "*" ve "_" işareti yerine "?" kullanılır.
+
+```{sql eval=FALSE, include=T}
+SELECT Uzun_Adı, üretici_id FROM ArabaUretici
+WHERE Uzun_Adı LIKE "a%";
+```
+
+```{sql eval=FALSE, include=T}
+SELECT üretici_adı FROM ArabaUretici WHERE üretici_adı LIKE "a%b";
+```
+<br>
+<br>
+  
+#### AND, NOT ve OR
+
+(1)  
+Silindir sayısı 6 ve motor hacmi 150 cc'ye eşit veya küçük olan arabların verisini listeleyen sorguyu yazınız.
+```{sql eval=FALSE, include=T}
+SELECT * FROM araba_verisi WHERE silindir_sayisi=6 AND motor_haci <= 150;
+```
+  
+(2)  
+Motor hacmi 350 cc'den büyük olan arabalardan, silindir sayısı 6'dan küçük eşit olan, veya tüketim değeri 20 mpg'den küçük olan arabaların verisini bulunuz.
+```{sql eval=FALSE, include=T}
+SELECT * FROM araba_verisi WHERE motor_hacmi>350 AND (silindir_sayısı <= 6 OR tuketim < 20);
+```
+<br>
+<br>
+
+#### IN
+IN işleci, bir alanda bulunan birden çok değeri içeren kayıtları seçmek amacıyla kullanılır. Çoklu OR bağlacı gibi.
+  
+(1)  
+"ArabaAdı" tablosuna kayıtlı arabalardan, marka_id'si 3,14 veya 23 olan arabaların model ve marka_id bilgilerini listeleyen bir sorgu yazınız.
+```{sql eval=FALSE, include=T}
+SELECT marka_id, model FROM ArabAdı WHERE marka_id IN (3,14,23);
+```
+  
+(2)  
+Aynı sorgunun eş değeri OR kullanarak;
+```{sql eval=FALSE, include=T}
+SELECT marka_id, model FROM ArabAdı WHERE marka_id=3 OR marka_id=14 OR marka_id=23;
+```
+<br>
+<br>
+
+#### BETWEEN 
+Bir aralık belirtmek için kullanılır.
+
+(1)  
+Beygir gücü 150 ile 200 arasında olan arabaların verisini listeleyiniz.
+```{sql eval=FALSE, include=T}
+SELECT * FROM araba_verisi WHERE beygir_gücü BETWEEN 150 AND 200;
+```
+<br>
+<br>
+
+#### DISTINCT
+Farklı değer alan kayıtları listemelek amacıyla kullanılır. Tekrar eden (Aynı olan) kayıtlardan (satırlardan) bir tanesini gösterir.  
+
+(1)  
+Araba verisi kayıtlarından farklı olan silindir sayılarını listeleyin.
+```{sql eval=FALSE, include=T}
+SELECT DISTINCT silindir_sayısı FROM araba_verisi; 
+```
+
+(2)  
+Araba verisi kayıtlarından silindir sayısı ve motor hacmi farklı olan kayıtları listeleyin.
+```{sql eval=FALSE, include=T}
+SELECT DISTINCT silindir_sayısı, motor hacmi FROM araba_verisi;
+```
+<br>
+<br>
+
+#### Aritemetik İşlemler:
+SELECT sorgularında aritmetik işlemler (toplama, çıkarma, çarpma, bölme işlemleri) kullanılabilir. 
+
+(1)  
+Araba verisi kayıtlarında bulunan arabaların silindir sayıları, ağırlıkları ve 100kg başına beygir güçlerini listeleyen bir sorgu yazınız.
+```{sql eval=FALSE, include=T}
+SELECT silindir_sayısı, ağırlığı, (beygir_gücü/ağırlığı)*100 FROM araba_verisi;
+```
+
+$\underline{NOT}$: Aritmetik ifadeler WHERE ölçütünde de kullanılabilir:  
+
+(1)  
+Yüz kg başına beygir gücü oranı 4,5'tan büyük olan arabaların silindir sayısı, ağırlığı ve yüz kg başına beygir gücü bilgilerini listeleyiniz.
+```{sql eval=FALSE, include=T}
+SELECT beygir_gücü, ağırlığı,(beygir_gücü/ağırlığı)*100) FROM araba_verisi WHERE ((beygir_gücü/ağırlığı)*100) >4.5;
+```
+<br>
+<br>
+
+#### Fonksiyonlar:
+
+| Fonksiyon | İşlevi                   |
+|:----------|:-------------------------|
+| `MAX()`   | En büyük değeri listeler |
+| `MIN()`   | En küçük değeri listeler |
+| `AVG()`   | Ortalama değeri listeler |
+| `SUM()`   | Toplam değeri listeler   |
+| `COUNT(*)`| Sorgudaki kayıt (liste) sayısını listeler|
+
+$\underline{Örnekler}$:
+
+(1)  
+Motor hacmi en büyük olan arabanın motor hacmi nedir?
+```{sql eval=FALSE, include=T}
+SELECT MAX(motor_hacmi) FROM araba_verisi;
+```
+
+(2)  
+Ortalama motor hacmi nedir?
+```{sql eval=FALSE, include=T}
+SELECT AVG(motor_hacmi) FROM araba_verisi;
+```
+
+(3)  
+Model yılı 1978 olan arabaların en küçük ve en büyük motor hacimleri ile ortalama motor hacmini uygun başlıklar ile listeleyiniz.
+```{sql eval=FALSE, include=T}
+SELECT MAX(motor_hacmi) AS [Maximum cc], MIN(motor_hacmi) AS [Minimum cc], AVG(motor_hacmi) AS [Ortalama hacim] FROM araba_verisi WHERE model_yılı=1978;
+```
+$\underline{NOT}$: "AS" işlecini kendisinden önceki değişken veya işleme bir isim vermek için kullanıyoruz. Ayrıca eğer vereceğimiz isimde "boşluk" veya "özel ifade ( ) ? ! vs." varsa köşeli parantez [ ] kullanıyoruz.  
+
+(4)  
+Araba verisine kayıtlı kaç tane 6 silindirli araba vardır?
+```{sql eval=FALSE, include=T}
+SELECT COUNT(*) FROM araba_verisi WHERE silindir_sayısı=6;
+```
+<br>
+<br>
+
+#### ORDER BY
+
+SQL cümlesi ile elde edilen satırlar kümesini sıralamak amacıyla kullanılır. Artan, ASC veya azalan, DESC.  
+  
+(1)
+Araba üreticilerinin listesini adına göre sıralanmış olarak veren bir sorgu yazınız.
+```{sql eval=FALSE, include=T}
+SELECT * FROM ArabaÜretici ORDER BY Uzun_Adı;
+```
+
+(2)
+Kıta tablosundaki kıta adlarını büyükten küçüğe (artan) sırada veren bir sorgu yazınız.
+```{sql eval=FALSE, include=T}
+SELECT * FROM Kıta ORDER BY kıta_adı DESC;
+```
+
+(3)
+Araba verisi tablosunda kayıtlı olan arabalardan 8 silindirli olanları beygir gücüne göre küçükten büyüğe sıralayın. Beygir gücü aynı olan arabalar hızlanma değerine göre artan sırada sıralansın.
+```{sql eval=FALSE, include=T}
+SELECT silindir_sayısı, beygir_gücü, hızlanma FROM araba_verisi WHERE silindir_sayısı=8 ORDER BY beygir_gücü ASC hızlanma;
+```
+
+<br>
+<br>
+
+### (2) Gruplama & Tablo Birleştirme:
+
+#### GROUP BY
+
+Gruplanacak ya da sınıflanacak sorgularda kullanılır. WHERE kelimesinden sonra yazılır. Yoksa FROM kelimesinden sonra gelir.
+
+(1)
+Araba verisi tablosunda silindir sayısına göre kaçar tane araba vardır?
+```{sql eval=FALSE, include=T}
+SELECT silindir_sayısı, COUNT(*) AS [Araba sayısı] FROM araba_verisi GROUP BY silindir_sayısı;
+```
+
+(2)
+Her model yılı için silindir sayılarına göre kaçar tane araba vardır?
+```{sql eval=FALSE, include=T}
+SELECT model_yılı, silindir_sayısı, COUNT(*) AS [Araba sayısı] FROM araba_verisi GROUP BY model_yılı, silindir_sayısı;
+```
+
+(3)
+Her model yılı için 6 ve 8 silindirli arabaların ortalama motor hacmi nedir?
+```{sql eval=FALSE, include=T}
+SELECT silindir_sayısı, model_yılı, AVG(motor_hacmi) AS [Ortalama Hacim] FROM araba_verisi
+WHERE silindir_sayısı IN (6,8) GROUP BY model_yılı, silindir_sayısı;
+```
+<br>
+<br>
+
+#### HAVING
+
+Gruplama sorgularında fonksiyon içeren GROUP BY deyimi ile birlikte kullanılır. Fonksiyonun değeri ile ilgili ölçütler HAVING ile yazılır.
+
+(1)
+Araba verisi tablosunda silindir sayısına göre, 20 taneden fazla olan araba sayılarını listeleyiniz.
+```{sql eval=FALSE, include=T}
+SELECT silindir_sayısı , COUNT(*) AS [Araba Sayısı] FROM araba_verisi
+GROUP BY silindir_sayısı HAVING COUNT(*)>20;
+```
+
+(2)
+Araba verisi tablosunda silindir sayısına göre, 20 taneden fazla olan araba sayılarını, araba sayılarına göre sıralı olacak biçimde listeleyiniz.
+```{sql eval=FALSE, include=T}
+SELECT silindir_sayısı, COUNT(*) AS [Araba Sayısı] From araba_verisi
+GROUP BY silindir_sayısı HAVING COUNT(*) > 20 
+ORDER BY COUNT(*);
+```
+
+(3)
+Model yılı 1972 ile 1977 arasında olan arabaların en küçük hızlanma değerlerini, her yıl için 12 saniyeden daha hızlı olanı listeleyin. Acaba 1972 ile 1977 arasında 12 saniyeden daha hızlı arabaların üretildiği yıllar hangileriydi? Hızlanma değeri sırasında listeleyin.
+```{sql eval=FALSE, include=T}
+SELECT model_yılı, MIN(hızlanma), araba_id FROM araba_verisi
+WHERE model_yılı BETWEEN 1972 AND 1977
+GROUP BY hızlanma HAVING MIN(hızlanma) < 12;
+```
+<br>
+<br>
+
+#### INNER JOIN
+
+İki farklı tabloyu birleştirebilmek için kesişim noktaları olması lazım ki bu kesişim noktası ise ya "primary key" ya da "foreign key" olması gerekir.  
+<center>
+![](E:/Hacettepe/Veri Tabanı Yönetimi/SQL Markdown/innerJoin.png)
+</center>
+
+(1)
+Araba veritabanında bulunan ülke ve kıta tablolarından yararlanarak ülke id , ülke adı ve kıta adı bilgilerini listeleyen bir sorgu yazınız.
+```{sql eval=FALSE, include=T}
+SELECT ülke_id, ülke_adı, kıta_adı 
+FROM Ülke INNER JOIN Kıta ON Ülke.kıta_id = Kıta.kıta_id;
+```
+$\underline{NOT}:$ kıta_id alan adı her iki tabloda aynı olduğu için tablo adlarını belirtmek gerekir.
+Hangi tablonun önce yazıldığının önemi yoktur. Her iki tablonun eşleşen kayıtları (satırları) seçilir.
+
+  
+(2)
+Araba veritabanına kayıtlı arabaların, araba id , modeli, silindir sayısı ve motor hacmi bilgilerini listeleyen bir sorgu yazınız.
+```{sql eval=FALSE, include=T}
+SELECT araba_id, model, silindir_sayısı, motor_hacmi
+FROM ArabaAdı INNER JOIN araba_verisi ON ArabaAdı.id = araba_verisi.araba_id;
+```
+
+(3)
+Araba veritabanına kayıtlı arabaların, araba id , markası, modeli, silindir sayısı ve motor hacmi bilgilerini listeleyen bir sorgu yazınız.
+  
+Araba id silindir sayısı ve motor hacmi bilgileri araba verisi tablosundadır. Araba modeli bilgisi araba adı tablosundadır. Marka bilgisi ise araba üreticisi tablosundadır. İstenen bilgiler bu üç tablonun birleştirilmesi ile elde edilir. SQL'de tablolar ikişerli birleştirildiği için üç tabloyu ikişerli ilişkilendirmek gerekir.
+```{sql eval=FALSE, include=T}
+SELECT araba_verisi.araba_Id, Marka, ArabaAdı.Model, silindir_sayısı, motor_hacmi
+FROM (araba_verisi INNER JOIN ArabaAdı ON araba_verisi.araba_Id = ArabaAdı.Id)
+INNER JOIN MarkaÜretici ON MarkaÜretici.marka_Id = ArabaAdı.marka_id;
+```
+
+<center>
+![](E:/Hacettepe/Veri Tabanı Yönetimi/SQL Markdown/InnerJoin2.png)  
+</center>
+  
+(4)
+Her ülkede kaçar tane araba üreticisi firma vardır?
+```{sql eval=FALSE, include=T}
+SELECT ülke_adı, COUNT(*) AS [Üretici Sayısı]
+FROM Ülke INNER JOIN ArabaÜretici ON Ülke.ülke_id = ArabaÜretici.ülke_kodu
+GROUP BY ülke_adı;
+```
+<br>
+<br>
+
+#### Outter Join (LEFT JOIN & RIGHT JOIN)
+
+İki tablodan bir tanesindeki tüm kayıtlar ile diğer tablodan eşleşen kayıtların seçildiği sorgu tipidir. SELECT cümlesinde ilk yazılan tablo soldaki tablodur.
+<center>
+![](E:/Hacettepe/Veri Tabanı Yönetimi/SQL Markdown/leftrightJoin.png)  
+</center>
+(1)  
+Araba veritabanında bulunan araba üreticilerin tüm satırlarına ait üretici id , üretici adı, uzun adı ve ülke adları biçimde listeleyen bir sorgu yazınız.  
+```{sql eval=FALSE, include=T}
+SELECT üretici_id , üretici_adı , Uzun_adı , ülke_adı
+FROM ArabaÜretici LEFT JOIN Ülke ON ArabaÜretici.ülke_kodu=Ülke.ülke_id;
+```
+
+(2)  
+Araba üreticilerinin hepsinin id'si ve adı ile birlikte, her birinin ürettiği marka sayısını listeleyen bir sorgu yazınız.  
+```{sql eval=FALSE, include=T}
+SELECT ArabaÜretici.üretici_id , üretici_adı, COUNT(*) AS [Marka Sayısı]
+FROM ArabaÜretici LEFT JOIN MarkaÜretici ON ArabaÜretici.üretici_id = MarkaÜretici.üretici_Id
+GROUP BY ArabaÜretici.üretici_id , üretici_adı;
+```
+<br>
+<br>
+
+<center>
+#### --ÇALIŞMA SORULARI (Fatura.db)--  
+</center>
+
+**İlişkisel Şema:**  
+
+<center>  
+![](E:/Hacettepe/Veri Tabanı Yönetimi/SQL Markdown/Fatura.png)
+</center>
+  
+(1)  
+Hangi müşterilere fatura kesilmiş? Müşteri no, adı, soyadı (tekrarsız)  
+```{sql eval=FALSE, include=T}
+SELECT Müşteri.m_no, adı, soyadı, COUNT(*) AS [Kesilen Fatura Sayısı]
+FROM Müşteri INNER JOIN Fatura ON Müşteri.m_no = Fatura.m_no
+GROUP BY adı, soyadı;
+```
+
+(2)  
+Kesilen tüm faturaların toplam tutarı nedir?  
+```{sql eval=FALSE, include=T}
+SELECT SUM(tutar) AS [Kesilen Tüm Faturaların Tutarı]
+From Fatura;
+```
+
+(3)  
+Tutarı en büyük faturanın toplam tutarı kaç TL’dir?  
+```{sql eval=FALSE, include=T}
+SELECT MAX(tutar) AS [Kesilen En Büyük Fatura Tutarı]
+From Fatura;
+```
+
+(4)  
+Tutarı en büyük faturanın toplam tutarı kaç TL’dir ve müşterisi kimdir? Adı ve soyadı.  
+```{sql  eval=FALSE, include=T}
+SELECT MAX(tutar) AS [Kesilen Fatura Tutarı] , adı, soyadı
+From Fatura INNER JOIN Müşteri ON Fatura.m_no = Müşteri.m_no;
+```
+
+(5)  
+Hiç ödeme yapılmamış faturalar; Fatura no ve tarih.  
+```{sql eval=F, include=T}
+SELECT Fatura.fat_no, Fatura.tarih
+FROM Fatura LEFT JOIN Ödeme ON Fatura.fat_no = Ödeme.fat_no
+WHERE ödeme_no IS NULL;
+```
+
+(6)  
+Hiç ödeme yapılmamış faturalar; Fatura no, tarih, müşteri adı ve soyadı.  
+```{sql eval=F, include=T}
+SELECT Fatura.fat_no, Fatura.tarih, adı, soyadı
+FROM (Fatura LEFT JOIN Ödeme ON Fatura.fat_no = Ödeme.fat_no)
+INNER JOIN Müşteri ON Müşteri.m_no = Fatura.m_no
+WHERE ödeme_no IS NULL;
+```
+
+(7)  
+Fatura kesilen her Müşteri için; Müşteri adı, soyadı ve en büyük olan fatura tutarı.  
+```{sql eval=F, include=T}
+SELECT adı, soyadı, MAX(tutar)
+FROM Fatura müşteri ON Fatura.m_no=müşteri.m_no
+GROUP BY adı, soyadı;
+```
+
+(8)  
+Faturalara yapılan ödemeler; Fatura no, fatura tarihi, fatura tutarı, ödeme no, ödeme tarihi ve ödeme tutarı.  
+```{sql eval=F , include=T}
+SELECT Fatura.fat_no, Fatura.tarih AS [Fatura Tarihi], tutar, ödeme_no, Ödeme.tarih AS [Ödenme Tarihi], miktar
+FROM Fatura LEFT JOIN Ödeme ON Fatura.fat_no = Ödeme.fat_no
+WHERE ödeme_no IS NOT NULL;
+```
+
+(9)  
+Faturalara yapılan ödemelerin fatura bazında toplamları; Fatura numarası ve ödeme toplamı.  
+```{sql eval=F , include=T}
+SELECT fat_no, SUM(miktar)
+FROM Ödeme
+GROUP BY fat_no;
+```
+
+(10)  
+Kesilen tüm faturalar ve ödenmeyeler de görünecek biçimde yapılan ödemeler.  
+```{sql eval=F, include=T}
+SELECT Fatura.fat_no, tutar, miktar, (tutar-miktar) AS Kalan
+FROM Fatura LEFT JOIN Ödeme ON Fatura.fat_no = Ödeme.fat_no
+GROUP BY Fatura.fat_no;
+```
+
+(11)  
+Londra’daki müşterilere kesilen faturalar; fatura numarası, müşteri numarası, müşteri adı, soyadı ve fatura tutarı.  
+```{sql eval=F, include=T}
+SELECT fat_no, Fatura.m_no, adı, soyadı, şehir, 	tutar
+FROM Fatura INNER JOIN Müşteri ON Fatura.m_no = Müşteri.m_no
+WHERE şehir = "London";
+```
+
+(12)  
+Şehirlere göre fatura toplamları.  
+```{sql eval=F, include=T}
+SELECT şehir, SUM(tutar) AS [Toplam Tutar]
+FROM Fatura INNER JOIN Müşteri ON Fatura.m_no=Müşteri.m_no
+GROUP BY şehir;
+```
+
+(13)  
+Londra şehrine ait faturaların toplamı.  
+```{sql eval=F, include=T}
+SELECT şehir, SUM(tutar) as [Toplam Tutar]
+FROM Fatura INNER JOIN Müşteri ON Fatura.m_no = Müşteri.m_no
+WHERE şehir = "London"
+```
+
+(14)  
+Fatura toplamı 500’den büyük olan şehirler.  
+```{sql eval=F, include=T}
+SELECT şehir, SUM(tutar)
+FROM Fatura INNER JOIN Müşteri ON Fatura.m_no=Müşteri.m_no
+GROUP BY şehir HAVING SUM(tutar)>500;
+```
+<br>
+<br>
+
+<center>
+#### --ÇALIŞMA SORULARI (Market.accdb)--  
+</center>
+
+**İlişkisel Şema:**
+<center>  
+![](E:/Hacettepe/Veri Tabanı Yönetimi/SQL Markdown/Market.png)
+</center>
+
+(1)  
+Japonya’dan verilen siparişlerin tarihi, durumu, ülkesi ve müşteri adını listeleyin.  
+```{sql eval=F, include=T}
+SELECT ülke, kurum_adı, Müşteri.kurum_no, sipariş_tarihi, durum
+FROM Sipariş INNER JOIN Müşteri ON Sipariş.kurum_no = Müşteri.kurum_no
+WHERE ülke = "Japan";
+```
+
+(2)  
+Siparişi olan müşterilerin numarası ve adını listeleyin.  
+```{sql eval=F, include=T}
+SELECT Müşteri.kurum_no, kurum_adı, COUNT(*) AS [Sipariş Sayısı]
+FROM Müşteri INNER JOIN Sipariş ON Müşteri.kurum_no = Sipariş.kurum_no
+GROUP BY Müşteri.kurum_no, kurum_adı;
+```
+
+(3)  
+Siparişi olmayan müşterilerin numarası, adını ve ülkesini listeleyin.  
+```{sql eval=F, include=T}
+SELECT Müşteri.kurum_no, kurum_adı, ülke
+FROM Müşteri LEFT JOIN Sipariş ON Müşteri.kurum_no = Sipariş.kurum_no
+WHERE sipariş_no IS NULL;
+```
+
+(4)  
+Satış temsilcisi olmayan müşterilerin adını, şehrini, eyaletini ve ülkesini listeleyin.  
+```{sql eval=F, include=T}
+SELECT kurum_adı, ülke, şehir, eyalet
+FROM Müşteri WHERE satış_temsilcisi_no IS NULL;
+```
+
+(5)  
+Ödemesi olan müşterilerin numarası, adı, şehri ve ülkesini listeleyin.  
+```{sql eval=F, include=T}
+SELECT Müşteri.kurum_no, kurum_adı, ülke, şehir
+FROM Müşteri INNER JOIN Ödeme ON Müşteri.kurum_no = Ödeme.kurum_no;
+```
+
+(6)  
+Satış temsilcisi olan fakat siparişi olmayan müşterilerin numarası, adı ve satış temsilcisin numarasını listeleyin.  
+```{sql eval=F, include=T}
+SELECT Müşteri.kurum_no, Müşteri.kurum_adı, Müşteri.satış_temsilcisi_no
+FROM Müşteri
+WHERE Müşteri.satış_temsilcisi_no IS NOT NULL
+AND Müşteri.kurum_no NOT IN(SELECT kurum_no FROM Sipariş);
+```
+
+(7)  
+Önceki sorguya satış temsilcisinin adını ve soyadını ekleyiniz.  
+```{sql, eval=F, include=T}
+SELECT Müşteri.kurum_no, Müşteri.kurum_adı, Müşteri.satış_temsilcisi_no, Çalışan.adı, Çalışan.soyadı
+FROM Müşteri, Çalışan
+WHERE Müşteri.satış_temsilcisi_no = Çalışan.çalışan_no
+AND MÜşteri.kurum_no NOT IN (SELECT kurum_no FROM Sipariş);
+```
+
+(8)  
+En az bir müşteriye atanmış çalışanların numarası, adı, soyadı ve baktıkları müşteri sayısını listeleyin.
+```{sql, eval=F, include=T}
+SELECT DISTINCT çalışan_no, adı, soyadı, COUNT(*) AS [Baktıkları Müşteri Sayısı]
+FROM Müşteri INNER JOIN Çalışan ON Müşteri.satış_temsilcisi_no = Çalışan.çalışan_no
+GROUP BY çalışan_no, adı, soyadı;
+```
+
+(9)  
+Müşteri sayısı en çok olan çalışanın müşteri sayısını bulun.  
+```{sql, eval=F, include=T}
+SELECT MAX([müşteri sayısı])
+FROM ( SELECT çalışan_no, adı, soyadı, count(*) AS [müşteri sayısı]
+FROM Çalışan, Müşteri
+WHERE Çalışan.çalışan_no=Müşteri.satış_temsilcisi_no
+GROUP BY çalışan_no, adı, soyadı);
+```
+
+(10)  
+Numarası 10105 olan siparişte yer alan ürünlerin ürün kodu, miktarı ve birim fiyatını, sıra numarasına göre sıralı olacak biçimde listeleyin.
+```{sql, eval=F, include=T}
+SELECT Sipariş.sipariş_no,ürün_kodu, miktar, birim_fiyatı, sıra_no
+FROM Sipariş INNER JOIN Sipariş_Detay ON Sipariş.sipariş_no = Sipariş_Detay.sipariş_no
+WHERE Sipariş.sipariş_no = 10105
+ORDER BY sıra_no;
+```
+
+(11)  
+Numarası 10105 olan siparişin toplam tutarı ne kadardır?  
+```{sql, eval=F, include=T}
+SELECT Sipariş.sipariş_no, SUM(birim_fiyatı) AS [Sipariş Tutarı]
+FROM Sipariş, Sipariş_Detay
+WHERE Sipariş.sipariş_no = Sipariş_Detay.sipariş_no AND Sipariş.sipariş_no = 10105
+GROUP BY Sipariş.sipariş_no;
+```
+
+(12)  
+Her siparişin sipariş tarihini, durumunu ve siparişin toplam tutarını listeleyin.  
+```{sql, eval=F, include=T}
+SELECT Sipariş.sipariş_no, sipariş_tarihi, durum, SUM(miktar*birim_fiyatı) AS [Toplam Tutar]
+FROM Sipariş INNER JOIN Sipariş_Detay ON Sipariş.sipariş_no = Sipariş_Detay.sipariş_no
+GROUP BY Sipariş.sipariş_no, sipariş_tarihi, durum;
+```
+
+(13)  
+Önceki sorgunun listesine müşteri adını ve ülkesini ekleyiniz.  
+```{sql, eval=F, include=T}
+SELECT Sipariş.sipariş_no, sipariş_tarihi, durum, kurum_adı, ülke, SUM(miktar*birim_fiyatı) AS [Toplam Tutar]
+FROM (Sipariş INNER JOIN Sipariş_Detay ON Sipariş.sipariş_no = Sipariş_Detay.sipariş_no) 
+INNER JOIN Müşteri ON Sipariş.kurum_no = Müşteri.kurum_no
+GROUP BY Sipariş.sipariş_no, sipariş_tarihi, durum, kurum_adı, ülke;
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
